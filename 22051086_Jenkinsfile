@@ -1,0 +1,87 @@
+pipeline {
+
+    agent {
+        node {
+            label 'master'
+        }
+    }
+
+    tools { 
+        maven 'maven3' 
+    }
+    options {
+        buildDiscarder logRotator( 
+                    daysToKeepStr: '15', 
+                    numToKeepStr: '10'
+            )
+    }
+
+    environment {
+		base_image = "ubuntu:18.04"
+		docker_image = "22051086_svr"
+		docker_webimage = "22051086_webimage"
+		docker_server = "S2_22051986_Server"
+		img_command = "apt-get update ; apt-get install -y apache2"
+		svr_command = "/etc/init.d/apache2 start && tail -f /dev/null cmd"
+		
+    }
+
+    stages {
+        
+        stage('S1_22051086') {
+            steps {
+				sh ' echo "S1_22051086 : Environment Preparation Completed"'
+            }
+        }
+
+        stage('S2_22051086') {
+            steps {
+                 sh """
+                                 docker rm -f ${docker_server}
+		                        docker rm -f ${docker_image}
+		 	docker pull ${base_image}
+			docker run -p 420:80 --name=${docker_image}  ${base_image} /bin/bash -c "${img_command}"
+			docker commit ${docker_image} ${docker_webimage}
+			docker run -d -it -p 42000:80 --name=${docker_server} ${docker_webimage}:latest /bin/bash -c "${svr_command}"
+		 """
+		 sh ' echo "S2_22051086: Web Server Creation Completed"'
+            }
+        }
+
+        stage('Parallel') {
+      
+			parallel {
+				
+				stage('S3_22051086') {
+					steps {
+						sh ' echo "S3_22051086 : API Test Completed"'
+					}
+				}
+				
+				stage('S4_22051086') {
+					steps {
+						sh ' echo "S4_22051086 : DAST Security Test Completed"'
+					}
+				}
+			}
+        }
+		
+   stage("S5_22051086") {
+            input {
+                message "Do you want to release the work?"
+                ok "Yes"
+            }
+            steps {
+                echo "Releasing"
+            }
+        }
+        
+		stage('S6_22051086') {
+            steps {
+                 sh ' echo "Work Released - 22051086"'
+            }
+        }
+	
+        }
+    }   
+}
