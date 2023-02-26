@@ -12,6 +12,7 @@ pipeline {
             )
     }
 
+
     environment {
 		base_image = "ubuntu:18.04"
 		docker_image = "22051086_svr"
